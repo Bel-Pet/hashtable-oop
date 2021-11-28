@@ -29,6 +29,7 @@ a.insert("e", elem1);
 b.insert("e", elem2);
 
 result1 = a == b;
+result2 = b != b;
 
 EXPECT_EQ(result1, false);
 EXPECT_EQ(result2, true);
