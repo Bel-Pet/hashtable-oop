@@ -1,7 +1,5 @@
 #include "hashtable.h"
 
-const size_t FIRST_TABLE_VOLUME = 1;
-
 HashTable::HashTable(): data_(new std::list<std::pair<Key, Value>> [FIRST_TABLE_VOLUME]), capacity_(FIRST_TABLE_VOLUME) {}
 
 HashTable::~HashTable() {
@@ -27,13 +25,13 @@ HashTable& HashTable::operator=(const HashTable & other) {
 }
 
 Value& HashTable::operator[](Key &k) {
-    try {
-        if (k.empty()) throw std::runtime_error("Empty key");
-    } catch (std::runtime_error & e) {
-        std::cout << e.what() << std::endl;
-        auto it = data_[hashFunction(k)].end();
-        return it->second;
-    }
+//    try {
+//        if (k.empty()) throw std::runtime_error("Empty key");
+//    } catch (std::runtime_error & e) {
+//        std::cout << e.what() << std::endl;
+//        auto it = data_[hashFunction(k)].end();
+//        return it->second;
+//    }
     auto it = data_[hashFunction(k)].begin();
 
     while (it != data_[hashFunction(k)].end()) {
@@ -42,13 +40,12 @@ Value& HashTable::operator[](Key &k) {
     }
     std::pair<Key, Value> new_elem;
     new_elem.first = k;
+    // use lambda?
     data_[hashFunction(k)].push_back(new_elem);
     return it->second;
 }
 
 bool HashTable::insert(const Key& k, const Value& v) {
-    if (k.empty())
-        return false;
 
     if (size_ >= capacity_ * 3 / 4)
         extension();
@@ -58,14 +55,11 @@ bool HashTable::insert(const Key& k, const Value& v) {
     while (it != data_[hashFunction(k)].end()) {
         if (it->first == k) {
             it->second = v;
-            return true;
+            return false;
         }
         it++;
     }
-    std::pair<Key, Value> new_elem;
-    new_elem.first = k;
-    new_elem.second = v;
-    data_[hashFunction(k)].push_back(new_elem);
+    data_[hashFunction(k)].push_back({k, v});
     size_++;
     return true;
 }
@@ -87,6 +81,11 @@ bool HashTable::erase(const Key &k) {
 bool HashTable::contains(const Key& k) const {
     auto it = data_[hashFunction(k)].begin();
 
+    return find(k, it);
+}
+
+bool
+HashTable::find(const Key &k, std::list<std::pair<Key, Value>, std::allocator<std::pair<Key, Value>>>::iterator &it) {
     while (it != data_[hashFunction(k)].end()) {
         if (it->first == k)
             return true;
@@ -175,6 +174,7 @@ void HashTable::extension() {
     auto other = new std::list<std::pair<Key, Value>> [capacity_ * 2];
     std::swap(other, data_);
     size_t other_capacity = capacity_;
+    // update capacity, add test
 
     for (int i = 0; i < other_capacity; i++)
         if(!other[i].empty()) {
@@ -184,6 +184,7 @@ void HashTable::extension() {
                 it++;
             }
         }
+    }
     delete[] other;
 }
 

@@ -54,11 +54,16 @@ public:
     friend bool operator==(const HashTable& a, const HashTable& b); //+
     friend bool operator!=(const HashTable& a, const HashTable& b); //+
 private:
+    const size_t FIRST_TABLE_VOLUME = 1;
+    auto find(const Key& k);
+    // * -> **
     std::list<std::pair<Key, Value>> *data_;
     size_t capacity_;
     size_t size_ = 0;
     [[nodiscard]] unsigned long hashFunction(const Key &k) const;
     void extension();
+
+    bool find(const Key &k, std::list<std::pair<Key, Value>, std::allocator<std::pair<Key, Value>>>::iterator &it);
 };
 
 #endif //HASHTABLE_HASHTABLE_H

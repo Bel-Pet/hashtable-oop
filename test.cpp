@@ -19,6 +19,7 @@ b.insert("c", elem3);
 b.insert("b", elem2);
 b.insert("a", elem1);
 
+// EXPECT_EQ
 bool result1 = a == b;
 bool result2 = a != b;
 
@@ -29,6 +30,7 @@ a.insert("e", elem1);
 b.insert("e", elem2);
 
 result1 = a == b;
+// why test works?
 result2 = b != b;
 
 EXPECT_EQ(result1, false);
@@ -45,7 +47,7 @@ a.insert("jksd", elem1);
 a.insert("sdfn", elem2);
 a.insert("fds", elem3);
 
-Value result = a.operator[]("fds");
+Value result = a["fds"];
 
 EXPECT_EQ(result.name, elem3.name);
 EXPECT_EQ(result.age, elem3.age);
