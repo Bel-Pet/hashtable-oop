@@ -41,16 +41,16 @@ HashTable& HashTable::operator=(const HashTable & other) {
 Value& HashTable::operator[](Key &k) {
     auto it = data_[hashFunction(k)]->begin();
 
-    if (find(k, &it)) {
-        return it->second;
-    }
-
     std::pair<Key, Value> new_elem;
     new_elem.first = k;
 
     if (data_[hashFunction(k)] == nullptr) {
         data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
         data_[hashFunction(k)]->push_back(new_elem);
+        return it->second;
+    }
+    
+    if (find(k, &it)) {
         return it->second;
     }
 
@@ -74,11 +74,6 @@ bool HashTable::insert(const Key& k, const Value& v) {
 
     auto it = data_[hashFunction(k)]->begin();
 
-    if (find(k, &it)) {
-        it->second = v;
-        return false;
-    }
-
     std::pair<Key, Value> new_elem;
     new_elem.first = k;
     new_elem.second = v;
@@ -89,6 +84,11 @@ bool HashTable::insert(const Key& k, const Value& v) {
         size_++;
         return true;
     }
+    
+    if (find(k, &it)) {
+        it->second = v;
+        return false;
+    }
 
     data_[hashFunction(k)]->push_back(new_elem);
     size_++;
@@ -97,6 +97,9 @@ bool HashTable::insert(const Key& k, const Value& v) {
 }
 
 bool HashTable::erase(const Key &k) {
+    if (data_[hashFunction(k)] == nullptr)
+        return false;
+    
     auto it = data_[hashFunction(k)]->begin();
 
     if (find(k, &it)) {
@@ -113,6 +116,9 @@ bool HashTable::erase(const Key &k) {
 }
 
 bool HashTable::contains(const Key& k) const {
+    if (data_[hashFunction(k)])
+        return false;
+    
     auto it = data_[hashFunction(k)]->begin();
     return HashTable::find(k, &it);
 }
