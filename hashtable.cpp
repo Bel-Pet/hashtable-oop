@@ -1,97 +1,120 @@
 #include "hashtable.h"
 
-HashTable::HashTable(): data_(new std::list<std::pair<Key, Value>> [FIRST_TABLE_VOLUME]), capacity_(FIRST_TABLE_VOLUME) {}
+HashTable::HashTable(): data_(new std::list<std::pair<Key, Value>>* [HashTable::FIRST_TABLE_VOLUME]), capacity_(HashTable::FIRST_TABLE_VOLUME), size_(0) {
+    for (int i = 0; i < capacity_; i++) {
+        data_[i] = nullptr;
+    }
+}
 
 HashTable::~HashTable() {
     delete[] data_;
 }
 
-HashTable::HashTable(const HashTable & other) : capacity_(other.capacity_), size_(other.size_), data_(new std::list<std::pair<Key, Value>> [other.capacity_]) {
-    for (int i = 0; i < capacity_; i++)
-        data_[i] = other.data_[i];
+HashTable::HashTable(const HashTable & other) : capacity_(other.capacity_), size_(other.size_), data_(new std::list<std::pair<Key, Value>>* [other.capacity_]) {
+    for (int i = 0; i < capacity_; i++) {
+        if (other.data_[i] != nullptr) {
+            data_[i] = new std::list<std::pair<Key, Value>>;
+            data_[i] = other.data_[i];
+        }
+    }
 }
 
 HashTable& HashTable::operator=(const HashTable & other) {
     if (&other != this) {
+        for (int i = 0; i < capacity_; i++) {
+            if (data_[i] != nullptr)
+                delete data_[i];
+        }
         delete[] data_;
         capacity_ = other.capacity_;
         size_ = other.size_;
-        data_ = new std::list<std::pair<Key, Value>> [capacity_];
+        data_ = new std::list<std::pair<Key, Value>>* [capacity_];
 
-        for (int i = 0; i < capacity_; i++)
+        for (int i = 0; i < capacity_; i++) {
+            data_[i] = new std::list<std::pair<Key, Value>>;
             data_[i] = other.data_[i];
+        }
     }
     return *this;
 }
 
 Value& HashTable::operator[](Key &k) {
-//    try {
-//        if (k.empty()) throw std::runtime_error("Empty key");
-//    } catch (std::runtime_error & e) {
-//        std::cout << e.what() << std::endl;
-//        auto it = data_[hashFunction(k)].end();
-//        return it->second;
-//    }
-    auto it = data_[hashFunction(k)].begin();
+    auto it = data_[hashFunction(k)]->begin();
 
-    while (it != data_[hashFunction(k)].end()) {
-        if (it->first == k) return it->second;
-        it++;
+    if (find(k, &it)) {
+        return it->second;
     }
+
     std::pair<Key, Value> new_elem;
     new_elem.first = k;
-    // use lambda?
-    data_[hashFunction(k)].push_back(new_elem);
+
+    if (data_[hashFunction(k)] == nullptr) {
+        data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
+        data_[hashFunction(k)]->push_back(new_elem);
+        return it->second;
+    }
+
+    data_[hashFunction(k)]->push_back(new_elem);
+
     return it->second;
 }
 
-bool HashTable::insert(const Key& k, const Value& v) {
+bool HashTable::find(const Key &k, std::list<std::pair<Key, Value>>::iterator* it) const{
+    while (*it != data_[hashFunction(k)]->end()) {
+        if ((*it)->first == k)
+            return true;
+        (*it)++;
+    }
+    return false;
+}
 
+bool HashTable::insert(const Key& k, const Value& v) {
     if (size_ >= capacity_ * 3 / 4)
         extension();
 
-    auto it = data_[hashFunction(k)].begin();
+    auto it = data_[hashFunction(k)]->begin();
 
-    while (it != data_[hashFunction(k)].end()) {
-        if (it->first == k) {
-            it->second = v;
-            return false;
-        }
-        it++;
+    if (find(k, &it)) {
+        it->second = v;
+        return false;
     }
-    data_[hashFunction(k)].push_back({k, v});
+
+    std::pair<Key, Value> new_elem;
+    new_elem.first = k;
+    new_elem.second = v;
+
+    if (data_[hashFunction(k)] == nullptr) {
+        data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
+        data_[hashFunction(k)]->push_back(new_elem);
+        size_++;
+        return true;
+    }
+
+    data_[hashFunction(k)]->push_back(new_elem);
     size_++;
+
     return true;
 }
 
 bool HashTable::erase(const Key &k) {
-    auto it = data_[hashFunction(k)].begin();
+    auto it = data_[hashFunction(k)]->begin();
 
-    while (it != data_[hashFunction(k)].end()) {
-        if (it->first == k) {
-            size_--;
-            data_[hashFunction(k)].erase(it);
-            return true;
-        }
-        it++;
+    if (find(k, &it)) {
+        size_--;
+        data_[hashFunction(k)]->erase(it);
+
+        if (data_[hashFunction(k)]->empty())
+            delete data_[hashFunction(k)];
+
+        return true;
     }
+
     return false;
 }
 
 bool HashTable::contains(const Key& k) const {
-    auto it = data_[hashFunction(k)].begin();
-
-    return find(k, it);
-}
-
-bool
-HashTable::find(const Key &k, std::list<std::pair<Key, Value>, std::allocator<std::pair<Key, Value>>>::iterator &it) {
-    while (it != data_[hashFunction(k)].end()) {
-        if (it->first == k)
-            return true;
-        it++;
-    }
-    return false;
+    auto it = data_[hashFunction(k)]->begin();
+    return HashTable::find(k, &it);
 }
 
 Value& HashTable::at(const Key& k) {
@@ -99,41 +122,28 @@ Value& HashTable::at(const Key& k) {
         if (!contains(k)) throw std::runtime_error("No such element");
     } catch (std::runtime_error & e) {
         std::cout << e.what() << std::endl;
-        auto it = data_[hashFunction(k)].end();
+        auto it = data_[hashFunction(k)]->end();
         return it->second;
     }
-    auto it = data_[hashFunction(k)].begin();
+    auto it = data_[hashFunction(k)]->begin();
 
-    while (it != data_[hashFunction(k)].end()) {
-        if (it->first == k)
-            return it->second;
-        it++;
+    if (find(k, &it)) {
+        return it->second;
     }
-    std::pair<Key, Value> new_elem;
-    new_elem.first = k;
-    data_[hashFunction(k)].push_back(new_elem);
-    return it->second;
 }
 
-Value& HashTable::at(const Key &k) const {
+const Value& HashTable::at(const Key &k) const {
     try {
         if (!contains(k)) throw std::runtime_error("No such element");
     } catch (std::runtime_error & e) {
         std::cout << e.what() << std::endl;
-        auto it = data_[hashFunction(k)].end();
+        auto it = data_[hashFunction(k)]->end();
         return it->second;
     }
-    auto it = data_[hashFunction(k)].begin();
+    auto it = data_[hashFunction(k)]->begin();
 
-    while (it != data_[hashFunction(k)].end()) {
-        if (it->first == k)
-            return it->second;
-        it++;
-    }
-    std::pair<Key, Value> new_elem;
-    new_elem.first = k;
-    data_[hashFunction(k)].push_back(new_elem);
-    return it->second;
+    if (find(k, &it))
+        return const_cast<Value&> (it->second);
 }
 
 size_t HashTable::size() const {
@@ -147,10 +157,18 @@ bool HashTable::empty() const {
 }
 
 void HashTable::clear() {
+    for (int i = 0; i < capacity_; i++) {
+        if (data_[i] != nullptr)
+            delete data_[i];
+    }
     delete[] data_;
-    data_ = new std::list<std::pair<Key, Value>> [FIRST_TABLE_VOLUME];
+    data_ = new std::list<std::pair<Key, Value>>* [FIRST_TABLE_VOLUME];
     capacity_ = FIRST_TABLE_VOLUME;
     size_ = 0;
+
+    for (int i = 0; i < capacity_; i++) {
+        data_[i] = nullptr;
+    }
 }
 
 void HashTable::swap(HashTable &other) {
@@ -170,20 +188,31 @@ unsigned long HashTable::hashFunction(const Key &k) const {
     return hash;
 }
 
+
 void HashTable::extension() {
-    auto other = new std::list<std::pair<Key, Value>> [capacity_ * 2];
+    auto other = new std::list<std::pair<Key, Value>>* [capacity_ * 2];
+    for (int i = 0; i < (capacity_*2); i++) {
+        other[i] = nullptr;
+    }
     std::swap(other, data_);
     size_t other_capacity = capacity_;
-    // update capacity, add test
+    capacity_ *= 2;
 
     for (int i = 0; i < other_capacity; i++)
-        if(!other[i].empty()) {
-            auto it = other[i].begin();
-            while (it != other[i].end()) {
-                data_[hashFunction(it->first)].push_back(*it);
+        if(other[i] != nullptr) {
+            auto it = other[i]->begin();
+            while (it != other[i]->end()) {
+                if (data_[hashFunction(it->first)] == nullptr)
+                    data_[hashFunction(it->first)] = new std::list<std::pair<Key, Value>>;
+
+                data_[hashFunction(it->first)]->push_back(*it);
                 it++;
             }
         }
+
+    for (int i = 0; i < other_capacity; i++) {
+        if (other[i] != nullptr)
+            delete other[i];
     }
     delete[] other;
 }
@@ -191,22 +220,22 @@ void HashTable::extension() {
 bool operator==(const HashTable& a, const HashTable& b) {
     if (a.size() != b.size())
         return false;
+
     for (size_t i = 0; i < a.capacity_; i++) {
-        if (a.data_[i].size() != b.data_[i].size())
-            return false;
-        auto it_a = a.data_[i].begin();
-        if (!a.data_[i].empty()) {
-            if (!b.contains(it_a->first))
-                return false;
-            if (it_a->second != b.at(it_a->first))
-                return false;
+        if (a.data_[i] != nullptr) {
+            auto it_a = a.data_[i]->begin();
+
+            while (it_a != a.data_[i]->end()) {
+                if (!b.contains(it_a->first))
+                    return false;
+                if (it_a->second != b.at(it_a->first))
+                    return false;
+            }
         }
     }
     return true;
 }
 
 bool operator!=(const HashTable& a, const HashTable& b) {
-    if (a == b)
-        return false;
-    return true;
+    return !(a == b);
 }
