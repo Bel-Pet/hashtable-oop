@@ -59,7 +59,7 @@ private:
     size_t size_;
     [[nodiscard]] unsigned long hashFunction(const Key &k) const;
     void extension();
-    const size_t FIRST_TABLE_VOLUME = 1;
+    static const size_t FIRST_TABLE_VOLUME = 1;
     bool find(const Key& k, std::list<std::pair<Key, Value>>::iterator* it) const;
 };
 
