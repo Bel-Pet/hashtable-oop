@@ -27,43 +27,40 @@ class HashTable {
 public:
     HashTable();
     ~HashTable();
-    HashTable(const HashTable& other); //+
+    HashTable(const HashTable& other);
 
-    HashTable& operator=(const HashTable& other); //+
+    HashTable& operator=(const HashTable& other); //Copy values from other HashTable
 
-    Value& operator[]( Key& k); //+
+    Value& operator[]( Key& k); //Find the value, otherwise add pair<Key, Value>
 
-    bool insert(const Key& k, const Value& v); //+
+    bool insert(const Key& k, const Value& v); //Add pair<Key, Value>, otherwise change the value
 
-    bool erase(const Key& k); //+
+    bool erase(const Key& k); //Delete pair<Key, Value>
 
-    [[nodiscard]] bool contains(const Key& k) const; //+
+    [[nodiscard]] bool contains(const Key& k) const; //Find Value
 
-    Value& at(const Key& k);
+    Value& at(const Key& k); //Find the value, otherwise "No such element"
 
-    [[nodiscard]] Value& at(const Key& k) const;
+    [[nodiscard]] const Value& at(const Key& k) const; //Find the value, otherwise "No such element"
 
-    [[nodiscard]] size_t size() const; //+
+    [[nodiscard]] size_t size() const; //Number of values in HashTable
 
-    [[nodiscard]] bool empty() const; //+
+    [[nodiscard]] bool empty() const; //
 
-    void clear(); //+
+    void clear(); //Clearing HashTable from values
 
-    void swap(HashTable& other); //+
+    void swap(HashTable& other); //Swap HashTables
 
-    friend bool operator==(const HashTable& a, const HashTable& b); //+
-    friend bool operator!=(const HashTable& a, const HashTable& b); //+
+    friend bool operator==(const HashTable& a, const HashTable& b);
+    friend bool operator!=(const HashTable& a, const HashTable& b);
 private:
-    const size_t FIRST_TABLE_VOLUME = 1;
-    auto find(const Key& k);
-    // * -> **
-    std::list<std::pair<Key, Value>> *data_;
+    std::list<std::pair<Key, Value>> **data_;
     size_t capacity_;
-    size_t size_ = 0;
+    size_t size_;
     [[nodiscard]] unsigned long hashFunction(const Key &k) const;
     void extension();
-
-    bool find(const Key &k, std::list<std::pair<Key, Value>, std::allocator<std::pair<Key, Value>>>::iterator &it);
+    const size_t FIRST_TABLE_VOLUME = 1;
+    bool find(const Key& k, std::list<std::pair<Key, Value>>::iterator* it) const;
 };
 
 #endif //HASHTABLE_HASHTABLE_H
