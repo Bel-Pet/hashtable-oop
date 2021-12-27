@@ -56,6 +56,7 @@ public:
     //Compares HashTables for each element
     friend bool operator!=(const HashTable& a, const HashTable& b);
 private:
+    const auto insert_value(const Key& k, const Value& v);
     std::list<std::pair<Key, Value>> **data_;
     size_t capacity_;
     size_t size_;
