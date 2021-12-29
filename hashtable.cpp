@@ -41,7 +41,6 @@ auto HashTable::find(const Key &k) const {
     return it;
 }
 
-// CR: check that works correctly
 const auto HashTable::insert_value(const Key& k, const Value& v) {
     if (size_ >= capacity_ * 3 / 4) extension();
 
@@ -51,11 +50,11 @@ const auto HashTable::insert_value(const Key& k, const Value& v) {
     auto it = find(k);
     if (it == data_[hashFunction(k)]->end()) {
         data_[hashFunction(k)]->push_back({k, v});
+        size_++;
         return --it;
     }
     return it;
 }
-
 
 bool HashTable::insert(const Key& k, const Value& v) {
     auto it = insert_value(k, v);
@@ -65,6 +64,7 @@ bool HashTable::insert(const Key& k, const Value& v) {
     }
     return true;
 }
+
 bool HashTable::erase(const Key &k) {
     if (size_ == 0 || data_[hashFunction(k)] == nullptr)
         return false;
@@ -82,7 +82,10 @@ bool HashTable::contains(const Key& k) {
         return false;
 
     auto it = find(k);
-    return it != data_[hashFunction(k)]->end();
+    if (it == data_[hashFunction(k)]->end())
+        return false;
+
+    return true;
 }
 
 size_t HashTable::size() const {
@@ -90,18 +93,19 @@ size_t HashTable::size() const {
 }
 
 bool HashTable::empty() const {
-    return size_ == 0;
+    if (size_ == 0)
+        return true;
+    return false;
 }
 
-// CR: check that works correctly
 void HashTable::clear() {
     for (int i = 0; i < capacity_; i++) {
         if (data_[i] != nullptr)
             delete data_[i];
     }
+    capacity_ = FIRST_TABLE_VOLUME;
     size_ = 0;
-//    HashTable newHashTable;
-//    swap(newHashTable);
+    data_ = new std::list<std::pair<Key, Value>>* [HashTable::FIRST_TABLE_VOLUME]();
 }
 
 void HashTable::swap(HashTable &other) {
@@ -116,21 +120,25 @@ Value& HashTable::operator[](const Key &k) {
     return it->second;
 }
 
-Value& HashTable::at(const Key& k) {
+Value& HashTable::atValue(const Key& k) const{
     if (data_[hashFunction(k)] == nullptr)
         data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
     auto it = find(k);
-    if (it == data_[hashFunction(k)]->end()) throw std::runtime_error("No such element");
+    try {
+        if (it == data_[hashFunction(k)]->end()) throw std::runtime_error("No such element");
+    } catch (std::runtime_error & e) {
+        std::cout << e.what() << std::endl;
+        return data_[hashFunction(k)]->end()->second;
+    }
     return it->second;
 }
 
+Value& HashTable::at(const Key& k) {
+    return atValue(k);
+}
+
 const Value& HashTable::at(const Key &k) const{
-    // CR: separate const_at
-    if (data_[hashFunction(k)] == nullptr)
-        data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
-    auto it = find(k);
-    if (it == data_[hashFunction(k)]->end()) throw std::runtime_error("No such element");
-    return const_cast<Value&>(it->second);
+    return const_cast<Value&>(atValue(k));
 }
 
 unsigned long HashTable::hashFunction(const Key &k) const {
@@ -146,13 +154,18 @@ unsigned long HashTable::hashFunction(const Key &k) const {
 
 
 void HashTable::extension() {
-    auto other = new std::list<std::pair<Key, Value>>* [capacity_ * 2]();
+    auto other = new std::list<std::pair<Key, Value>>* [capacity_ * 2];
+    for (int i = 0; i < (capacity_*2); i++) {
+        other[i] = nullptr;
+    }
     std::swap(other, data_);
     size_t other_capacity = capacity_;
     capacity_ *= 2;
     size_t amountOfElement = size_;
 
-    for (int i = 0; i < other_capacity && amountOfElement != 0; i++) {
+    for (int i = 0; i < other_capacity; i++) {
+        if (amountOfElement == 0)
+            break;
         if(other[i] != nullptr) {
             auto it = other[i]->begin();
             while (it != other[i]->end()) {
