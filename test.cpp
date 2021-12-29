@@ -286,6 +286,9 @@ TEST(hashtable, ClearCorrectForNotEmptyHashTable) {
     a.clear();
 
     EXPECT_EQ(a.size(), 0);
+    EXPECT_FALSE(a.contains("a"));
+    EXPECT_FALSE(a.contains("b"));
+    EXPECT_FALSE(a.contains("c"));
 }
 
 TEST(hashtable, ClearCorrectForEmptyHashTable) {
