@@ -49,3 +49,10 @@ public:
    friend bool operator==(const HashTable& a, const HashTable& b);
    friend bool operator!=(const HashTable& a, const HashTable& b);
 };
+
+Полезные ссылки
+
+https://en.cppreference.com/w/
+https://www.valgrind.org/
+https://google.github.io/googletest/quickstart-cmake.html
+https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/Articles/FindingLeaks.html
