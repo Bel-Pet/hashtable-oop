@@ -31,23 +31,14 @@ HashTable& HashTable::operator=(const HashTable & other) {
     return *this;
 }
 
-auto HashTable::find(const Key &k) const {
-    auto it = data_[hashFunction(k)]->begin();
-    while (it != data_[hashFunction(k)]->end()) {
-        if (it->first == k)
-            return it;
-        it++;
-    }
-    return it;
-}
-
-const auto HashTable::insert_value(const Key& k, const Value& v) {
+auto HashTable::insert_value(const Key& k, const Value& v) {
     if (size_ >= capacity_ * 3 / 4) extension();
 
     if (data_[hashFunction(k)] == nullptr)
         data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
 
-    auto it = find(k);
+    auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
+    //auto it = find(k);
     if (it == data_[hashFunction(k)]->end()) {
         data_[hashFunction(k)]->push_back({k, v});
         size_++;
@@ -68,7 +59,7 @@ bool HashTable::insert(const Key& k, const Value& v) {
 bool HashTable::erase(const Key &k) {
     if (size_ == 0 || data_[hashFunction(k)] == nullptr)
         return false;
-    auto it = find(k);
+    auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
     if (it != data_[hashFunction(k)]->end()) {
         size_--;
         data_[hashFunction(k)]->erase(it);
@@ -81,7 +72,7 @@ bool HashTable::contains(const Key& k) {
     if (data_[hashFunction(k)] == nullptr)
         return false;
 
-    auto it = find(k);
+    auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
     if (it == data_[hashFunction(k)]->end())
         return false;
 
@@ -123,7 +114,7 @@ Value& HashTable::operator[](const Key &k) {
 Value& HashTable::atValue(const Key& k) const{
     if (data_[hashFunction(k)] == nullptr)
         data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
-    auto it = find(k);
+    auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
     try {
         if (it == data_[hashFunction(k)]->end()) throw std::runtime_error("No such element");
     } catch (std::runtime_error & e) {
@@ -197,7 +188,7 @@ bool operator==(const HashTable& a, const HashTable& b) {
                 if (b.data_[b.hashFunction(it_a->first)] == nullptr)
                     return false;
 
-                auto it_b = b.find(it_a->first);
+                auto it_b = std::find_if(b.data_[b.hashFunction(it_a->first)]->begin(), b.data_[b.hashFunction(it_a->first)]->end(), [it_a](const std::pair<Key, Value>& c){return c.first == it_a->first;});
 
                 if (it_b == b.data_[b.hashFunction(it_a->first)]->end())
                     return false;
