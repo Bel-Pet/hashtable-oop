@@ -56,14 +56,14 @@ public:
     //Compares HashTables for each element
     friend bool operator!=(const HashTable& a, const HashTable& b);
 private:
-    const auto insert_value(const Key& k, const Value& v);
+    [[nodiscard]] Value& atValue(const Key& k) const;
+    auto insert_value(const Key& k, const Value& v);
     std::list<std::pair<Key, Value>> **data_;
     size_t capacity_;
     size_t size_;
     [[nodiscard]] unsigned long hashFunction(const Key &k) const;
     void extension();
     static const size_t FIRST_TABLE_VOLUME = 4;
-    [[nodiscard]] auto find(const Key& k) const;
 };
 
 #endif //HASHTABLE_HASHTABLE_H
