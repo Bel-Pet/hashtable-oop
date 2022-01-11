@@ -78,7 +78,7 @@ TEST(hashtable, CorrectWorkOperatorEqualsAndNotEquals) {
     bool result2 = a != b;
 
     EXPECT_TRUE(result1);
-    EXPECT_TRUE(!result2);
+    EXPECT_FALSE(result2);
 
     a.insert("e", elements[0]);
     b.insert("e", elements[1]);

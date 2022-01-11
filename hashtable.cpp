@@ -34,13 +34,14 @@ HashTable& HashTable::operator=(const HashTable & other) {
 auto HashTable::insert_value(const Key& k, const Value& v) {
     if (size_ >= capacity_ * 3 / 4) extension();
 
-    if (data_[hashFunction(k)] == nullptr)
-        data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
+    unsigned long hash = hashFunction(k);
+    if (data_[hash] == nullptr)
+        data_[hash] = new std::list<std::pair<Key, Value>>;
 
-    auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
+    auto it = std::find_if(data_[hash]->begin(), data_[hash]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
     //auto it = find(k);
-    if (it == data_[hashFunction(k)]->end()) {
-        data_[hashFunction(k)]->push_back({k, v});
+    if (it == data_[hash]->end()) {
+        data_[hash]->push_back({k, v});
         size_++;
         return --it;
     }
@@ -69,14 +70,11 @@ bool HashTable::erase(const Key &k) {
 }
 
 bool HashTable::contains(const Key& k) {
-    if (data_[hashFunction(k)] == nullptr)
+    if (size_ == 0 || data_[hashFunction(k)] == nullptr)
         return false;
 
     auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
-    if (it == data_[hashFunction(k)]->end())
-        return false;
-
-    return true;
+    return it != data_[hashFunction(k)]->end();
 }
 
 size_t HashTable::size() const {
@@ -84,9 +82,7 @@ size_t HashTable::size() const {
 }
 
 bool HashTable::empty() const {
-    if (size_ == 0)
-        return true;
-    return false;
+    return size_ == 0;
 }
 
 void HashTable::clear() {
@@ -111,25 +107,20 @@ Value& HashTable::operator[](const Key &k) {
     return it->second;
 }
 
-Value& HashTable::atValue(const Key& k) const{
+Value& HashTable::at_value(const Key& k) const{
     if (data_[hashFunction(k)] == nullptr)
-        data_[hashFunction(k)] = new std::list<std::pair<Key, Value>>;
+        throw std::runtime_error("No such element");
     auto it = std::find_if(data_[hashFunction(k)]->begin(), data_[hashFunction(k)]->end(), [k](const std::pair<Key, Value>& c){return c.first == k;});
-    try {
-        if (it == data_[hashFunction(k)]->end()) throw std::runtime_error("No such element");
-    } catch (std::runtime_error & e) {
-        std::cout << e.what() << std::endl;
-        return data_[hashFunction(k)]->end()->second;
-    }
+    if (it == data_[hashFunction(k)]->end()) throw std::runtime_error("No such element");
     return it->second;
 }
 
 Value& HashTable::at(const Key& k) {
-    return atValue(k);
+    return at_value(k);
 }
 
 const Value& HashTable::at(const Key &k) const{
-    return const_cast<Value&>(atValue(k));
+    return const_cast<Value&>(at_value(k));
 }
 
 unsigned long HashTable::hashFunction(const Key &k) const {
@@ -145,31 +136,29 @@ unsigned long HashTable::hashFunction(const Key &k) const {
 
 
 void HashTable::extension() {
-    auto other = new std::list<std::pair<Key, Value>>* [capacity_ * 2];
-    for (int i = 0; i < (capacity_*2); i++) {
-        other[i] = nullptr;
-    }
+    auto other = new std::list<std::pair<Key, Value>>* [capacity_ * 2]();
     std::swap(other, data_);
-    size_t other_capacity = capacity_;
+    size_t old_capacity = capacity_;
     capacity_ *= 2;
     size_t amountOfElement = size_;
 
-    for (int i = 0; i < other_capacity; i++) {
+    for (int i = 0; i < old_capacity; i++) {
         if (amountOfElement == 0)
             break;
         if(other[i] != nullptr) {
             auto it = other[i]->begin();
             while (it != other[i]->end()) {
-                if (data_[hashFunction(it->first)] == nullptr)
-                    data_[hashFunction(it->first)] = new std::list<std::pair<Key, Value>>;
-                data_[hashFunction(it->first)]->push_back(*it);
+                unsigned long hash = hashFunction(it->first);
+                if (data_[hash] == nullptr)
+                    data_[hash] = new std::list<std::pair<Key, Value>>;
+                data_[hash]->push_back(*it);
                 amountOfElement--;
                 it++;
             }
         }
     }
 
-    for (int i = 0; i < other_capacity; i++) {
+    for (int i = 0; i < old_capacity; i++) {
         if (other[i] != nullptr)
             delete other[i];
     }
@@ -185,12 +174,13 @@ bool operator==(const HashTable& a, const HashTable& b) {
             auto it_a = a.data_[i]->begin();
 
             while (it_a != a.data_[i]->end()) {
-                if (b.data_[b.hashFunction(it_a->first)] == nullptr)
+                unsigned long a_hash = b.hashFunction(it_a->first);
+                if (b.data_[a_hash] == nullptr)
                     return false;
 
-                auto it_b = std::find_if(b.data_[b.hashFunction(it_a->first)]->begin(), b.data_[b.hashFunction(it_a->first)]->end(), [it_a](const std::pair<Key, Value>& c){return c.first == it_a->first;});
+                auto it_b = std::find_if(b.data_[a_hash]->begin(), b.data_[a_hash]->end(), [it_a](const std::pair<Key, Value>& c){return c.first == it_a->first;});
 
-                if (it_b == b.data_[b.hashFunction(it_a->first)]->end())
+                if (it_b == b.data_[a_hash]->end())
                     return false;
 
                 if (it_b->second != it_a->second)

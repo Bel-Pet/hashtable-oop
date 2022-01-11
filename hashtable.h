@@ -13,14 +13,10 @@ struct Value {
     std::string name;
     unsigned age = 0;
     friend bool operator==(const Value& a, const Value& b) {
-        if (a.age != b.age || a.name != b.name)
-            return false;
-        return true;
+        return a.age == b.age && a.name == b.name;
     }
     friend bool operator!=(const Value& a, const Value& b) {
-        if (a == b)
-            return false;
-        return true;
+        return !(a == b);
     }
 };
 
@@ -47,7 +43,7 @@ public:
     [[nodiscard]] size_t size() const;
     //Checks if the table is empty
     [[nodiscard]] bool empty() const;
-    //Clearing HashTable from items
+    //Clearing HashTable from items. Shrinks hashtable to initial capacity.
     void clear();
     //Swap this HashTables with other
     void swap(HashTable& other);
@@ -56,7 +52,7 @@ public:
     //Compares HashTables for each element
     friend bool operator!=(const HashTable& a, const HashTable& b);
 private:
-    [[nodiscard]] Value& atValue(const Key& k) const;
+    [[nodiscard]] Value& at_value(const Key& k) const;
     auto insert_value(const Key& k, const Value& v);
     std::list<std::pair<Key, Value>> **data_;
     size_t capacity_;
