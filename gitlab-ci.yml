@@ -1,7 +1,6 @@
 image: localhost:5000/ubuntu-cpptests:16.04
 
 before_script:
-  - sudo apt-get install cmake # install cmake
   - rm -Rf build
   - mkdir build
   - cd build
