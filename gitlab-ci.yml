@@ -1,17 +1,18 @@
 image: localhost:5000/ubuntu-cpptests:16.04
 
 before_script:
+  - apt-get install -y clang-format
   - rm -Rf build
   - mkdir build
   - cd build
   - cmake ..
   - make -j8
 
-run tests:
-  only:
-    -master
-  tags:
-    - cpp
-    - tests
+run-format:
   script:
-    - ./HashTableTest
+    - cd ..
+    - ./clang-format-check.sh
+
+run tests:
+  script:
+    - ./build/HashTableTest
